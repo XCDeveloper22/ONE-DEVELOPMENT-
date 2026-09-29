@@ -139,7 +139,7 @@ export const InDevelopmentView: React.FC<InDevelopmentViewProps> = ({
         {/* Headings */}
         <div className="text-center space-y-1 sm:space-y-1.5 shrink-0">
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl text-[#7B1113] font-bold tracking-tight">
-            Our Website is Under Development
+            Website is Under Development
           </h1>
           <p className="text-xs sm:text-sm text-[#6E5D5F] max-w-md mx-auto leading-relaxed">
             An online community and student wall for Mindanao State University.
