@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --msu-maroon: #7B1113;
+    --msu-maroon-dark: #580B0C;
+    --msu-gold: #D4AF37;
+    --msu-gold-light: #F7EFE0;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    transition: font-size 0.15s ease;
+  }
+
+  html[data-char-size="sm"] {
+    font-size: 14.5px;
+  }
+
+  html[data-char-size="md"] {
+    font-size: 16px;
+  }
+
+  html[data-char-size="lg"] {
+    font-size: 17.75px;
+  }
+
+  html[data-char-size="xl"] {
+    font-size: 19.5px;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: 0.96875rem; /* 15.5px comfortable reading baseline */
+    line-height: 1.65;
+    letter-spacing: -0.006em;
+    background-color: #FAF8F5;
+    color: #1A1213;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.28;
+    text-wrap: balance;
+  }
+
+  p, li, textarea, input, select, button {
+    font-family: var(--font-sans);
+  }
+
+  p {
+    line-height: 1.65;
+  }
+
+  .font-mono, .tabular-nums {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* =========================================================================
+   READABILITY & TYPOGRAPHY ENHANCEMENTS
+   Prevents cramped micro-text and boosts secondary text legibility
+   ========================================================================= */
+.text-xs {
+  font-size: 0.84375rem !important; /* 13.5px instead of tiny 12px */
+  line-height: 1.5 !important;
+}
+
+.text-\[11px\] {
+  font-size: 0.78125rem !important; /* 12.5px instead of 11px */
+  line-height: 1.45 !important;
+}
+
+.text-\[10px\] {
+  font-size: 0.75rem !important; /* 12px minimum floor */
+  line-height: 1.4 !important;
+}
+
+.text-sm {
+  font-size: 0.9375rem !important; /* 15px crisp body text */
+  line-height: 1.6 !important;
+}
+
+.text-\[15px\] {
+  font-size: 0.95rem !important;
+  line-height: 1.65 !important;
+}
+
+.text-\[\#6E5D5F\] {
+  color: #4D3D3F;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* =========================================================================
+   LATE-NIGHT STUDY DARK MODE THEME (html.dark)
+   ========================================================================= */
+html.dark body {
+  background-color: #120E0F !important;
+  color: #F5EFEA !important;
+}
+
+html.dark .bg-\[\#FAF8F5\],
+html.dark .bg-\[\#FDFBF9\],
+html.dark .bg-\[\#FAF8F5\]\/50,
+html.dark .bg-\[\#FFFDF7\] {
+  background-color: #120E0F !important;
+}
+
+html.dark .bg-white {
+  background-color: #1C1517 !important;
+  color: #F5EFEA !important;
+}
+
+html.dark .bg-\[\#F7EFE0\]\/70,
+html.dark .bg-\[\#F7EFE0\]\/60,
+html.dark .bg-\[\#F7EFE0\]\/50,
+html.dark .bg-\[\#F7EFE0\]\/40,
+html.dark .bg-\[\#F2ECE9\] {
+  background-color: #2A1F22 !important;
+}
+
+html.dark .hover\:bg-\[\#FAF8F5\]:hover,
+html.dark .hover\:bg-\[\#F2ECE9\]:hover {
+  background-color: #261C1F !important;
+}
+
+html.dark .border-\[\#E8DFDC\],
+html.dark .border-\[\#F2ECE9\] {
+  border-color: #35272A !important;
+}
+
+html.dark .divide-\[\#F2ECE9\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2E2225 !important;
+}
+
+html.dark .text-\[\#1F1617\] {
+  color: #F5EFEA !important;
+}
+
+html.dark .text-\[\#6E5D5F\],
+html.dark .text-\[\#9E8E90\] {
+  color: #D2C3C5 !important;
+}
+
+/* Make maroon headings and accents legible on dark card surfaces while keeping maroon buttons intact */
+html.dark h1.text-\[\#7B1113\],
+html.dark h2.text-\[\#7B1113\],
+html.dark h3.text-\[\#7B1113\],
+html.dark span.text-\[\#7B1113\],
+html.dark div.text-\[\#7B1113\],
+html.dark a.text-\[\#7B1113\],
+html.dark svg.text-\[\#7B1113\] {
+  color: #E8C15A !important;
+}
+
+/* Keep solid gold badges readable with dark ink */
+html.dark .bg-\[\#D4AF37\].text-\[\#7B1113\],
+html.dark .bg-\[\#D4AF37\].text-\[\#1F1617\] {
+  color: #1F1617 !important;
+}
+
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark textarea,
+html.dark select {
+  background-color: #241B1D !important;
+  color: #F5EFEA !important;
+  border-color: #3A2B2E !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #9E8B8E !important;
+}
+
+@keyframes dashboardEnterKeyframes {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dashboard-enter-anim {
+  animation: dashboardEnterKeyframes 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+

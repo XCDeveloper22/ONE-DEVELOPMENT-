@@ -1,0 +1,8 @@
+{
+  "name": "ONE — IN DEVELOPMENT",
+  "description": "An exclusive, minimal community platform and rant wall for Mindanao State University (MSUan) and verified .edu.ph students with multi-format academic file sharing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

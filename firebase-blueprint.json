@@ -1,0 +1,1139 @@
+{
+  "entities": {
+    "UserPublicProfile": {
+      "title": "UserPublicProfile",
+      "description": "Public student profile displaying Gmail avatar, display name, verified/developer badge, and unique nickname subject to a 60-day change cooldown.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the student"
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "description": "Unique student nickname changeable once every 2 months (60 days)"
+        },
+        "nicknameUpdatedAt": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "ISO timestamp when nickname was last set or changed"
+        },
+        "googleDisplayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Student's Gmail profile display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Student's Gmail profile photo URL"
+        },
+        "emailDomain": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Verified institutional domain such as s.msumain.edu.ph"
+        },
+        "campus": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "MSU campus affiliation"
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "Short student bio or status"
+        },
+        "defaultAnonymous": {
+          "type": "boolean",
+          "description": "Whether student posts and comments default to anonymous mode"
+        },
+        "badge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips"],
+          "description": "Account badge assigned upon creation: 'developer' for xandercamarin@gmail.com, 'tulips' for delecernaahrene122008@gmail.com, 'verified' for all other users"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of account creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last profile update"
+        }
+      },
+      "required": [
+        "uid",
+        "nickname",
+        "nicknameUpdatedAt",
+        "googleDisplayName",
+        "photoURL",
+        "emailDomain",
+        "campus",
+        "bio",
+        "defaultAnonymous",
+        "badge",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated private student PII and account security state accessible strictly by the account owner.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the student"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 254,
+          "description": "Full institutional .edu.ph email address"
+        },
+        "hasCustomPassword": {
+          "type": "boolean",
+          "description": "Whether the student has set a secondary account password"
+        },
+        "passwordUpdatedAt": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "ISO timestamp when password was last changed"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of private record creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of private record update"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "hasCustomPassword",
+        "passwordUpdatedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "NicknameReservation": {
+      "title": "NicknameReservation",
+      "description": "Unique nickname reservation mapping a normalized nickname key to its owner UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID"
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "description": "Original display casing of the reserved nickname"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of reservation"
+        }
+      },
+      "required": ["uid", "nickname", "updatedAt"]
+    },
+    "UserPresence": {
+      "title": "UserPresence",
+      "description": "Real-time online presence record for verified MSUan users.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "User UID"
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "description": "User nickname"
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "User avatar URL"
+        },
+        "badge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips"],
+          "description": "User badge"
+        },
+        "campus": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "User campus"
+        },
+        "isOnline": {
+          "type": "boolean",
+          "description": "Whether the user has an active session"
+        },
+        "lastSeenMs": {
+          "type": "number",
+          "description": "Epoch milliseconds of last heartbeat"
+        },
+        "visibility": {
+          "type": "string",
+          "maxLength": 32,
+          "enum": ["edu_verified"],
+          "description": "Visibility scope"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of heartbeat"
+        }
+      },
+      "required": [
+        "uid",
+        "nickname",
+        "photoURL",
+        "badge",
+        "campus",
+        "isOnline",
+        "lastSeenMs",
+        "visibility",
+        "updatedAt"
+      ]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Student rant or situation post with optional photo, video, PDF, Word, Excel, or PowerPoint attachment.",
+      "type": "object",
+      "properties": {
+        "authorId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the post author"
+        },
+        "authorNickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Author's nickname or Anonymous MSUan"
+        },
+        "authorDisplayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Author's Gmail display name or hidden label"
+        },
+        "authorPhotoURL": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Author's Gmail profile photo URL"
+        },
+        "authorDomain": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Institutional domain badge of the author"
+        },
+        "authorBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips"],
+          "description": "Author's badge ('verified', 'moderator', 'developer', or 'tulips')"
+        },
+        "isAnonymous": {
+          "type": "boolean",
+          "description": "Whether the post hides the author's Gmail identity and nickname"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 40,
+          "enum": [
+            "Academic Rant",
+            "Campus Life",
+            "Dorm & Housing",
+            "Prof & Subjects",
+            "Org & Events",
+            "Study Materials",
+            "General Rant"
+          ],
+          "description": "Rant or post category"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Optional headline for the rant or shared material"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 5000,
+          "description": "Main body text of the rant or post"
+        },
+        "attachmentType": {
+          "type": "string",
+          "maxLength": 16,
+          "enum": ["none", "photo", "video", "pdf", "word", "excel", "ppt"],
+          "description": "Type of file attached to the post"
+        },
+        "attachmentName": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Original filename of the attachment"
+        },
+        "attachmentSize": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "attachmentMime": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "MIME type of the attachment"
+        },
+        "attachmentDataUrl": {
+          "type": "string",
+          "maxLength": 750000,
+          "description": "Data URL or preview payload of the uploaded file"
+        },
+        "likesCount": {
+          "type": "number",
+          "description": "Count of damay/support reactions"
+        },
+        "commentsCount": {
+          "type": "number",
+          "description": "Count of student comments"
+        },
+        "visibility": {
+          "type": "string",
+          "maxLength": 32,
+          "enum": ["edu_verified"],
+          "description": "Access control scope for verified .edu.ph students"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when post was published"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when post was last updated"
+        }
+      },
+      "required": [
+        "authorId",
+        "authorNickname",
+        "authorDisplayName",
+        "authorPhotoURL",
+        "authorDomain",
+        "authorBadge",
+        "isAnonymous",
+        "category",
+        "title",
+        "content",
+        "attachmentType",
+        "attachmentName",
+        "attachmentSize",
+        "attachmentMime",
+        "attachmentDataUrl",
+        "likesCount",
+        "commentsCount",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Comment on a student post.",
+      "type": "object",
+      "properties": {
+        "postId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Parent post ID"
+        },
+        "authorId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Comment author UID"
+        },
+        "authorNickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Comment author nickname or Anonymous MSUan"
+        },
+        "authorDisplayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Comment author Gmail display name"
+        },
+        "authorPhotoURL": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Comment author Gmail photo URL"
+        },
+        "authorBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips"],
+          "description": "Comment author badge ('verified', 'moderator', 'developer', or 'tulips')"
+        },
+        "isAnonymous": {
+          "type": "boolean",
+          "description": "Whether comment is posted anonymously"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1500,
+          "description": "Comment text"
+        },
+        "replyToCommentId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Optional ID of the comment being replied to"
+        },
+        "replyToNickname": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Optional nickname of the author being replied to"
+        },
+        "visibility": {
+          "type": "string",
+          "maxLength": 32,
+          "enum": ["edu_verified"],
+          "description": "Access scope for verified .edu.ph students"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of comment creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of comment update"
+        }
+      },
+      "required": [
+        "postId",
+        "authorId",
+        "authorNickname",
+        "authorDisplayName",
+        "authorPhotoURL",
+        "authorBadge",
+        "isAnonymous",
+        "content",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Reaction": {
+      "title": "Reaction",
+      "description": "Student solidarity reaction (Damay) on a post.",
+      "type": "object",
+      "properties": {
+        "postId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Parent post ID"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Reacting user UID"
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 16,
+          "enum": ["damay", "hug", "fire"],
+          "description": "Reaction type"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of reaction"
+        }
+      },
+      "required": ["postId", "userId", "type", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Real-time notification delivered when a user receives a like, comment, or chat message.",
+      "type": "object",
+      "properties": {
+        "recipientId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Recipient user UID"
+        },
+        "actorId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Actor user UID"
+        },
+        "actorNickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Actor nickname or Anonymous MSUan"
+        },
+        "actorPhotoURL": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Actor photo URL"
+        },
+        "actorBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips", "one_official"],
+          "description": "Actor badge"
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["like", "comment", "message"],
+          "description": "Notification event type"
+        },
+        "targetId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Target postId or chatId"
+        },
+        "previewText": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Short preview of the post, comment, or message"
+        },
+        "read": {
+          "type": "boolean",
+          "description": "Whether recipient has read this notification"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of notification creation"
+        }
+      },
+      "required": [
+        "recipientId",
+        "actorId",
+        "actorNickname",
+        "actorPhotoURL",
+        "actorBadge",
+        "type",
+        "targetId",
+        "previewText",
+        "read",
+        "createdAt"
+      ]
+    },
+    "ChatThread": {
+      "title": "ChatThread",
+      "description": "Direct 1-on-1 chat conversation metadata between two verified MSU users.",
+      "type": "object",
+      "properties": {
+        "participantIds": {
+          "type": "array",
+          "description": "2-element array of participant UIDs"
+        },
+        "userAId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userANickname": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "userAPhotoURL": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "userABadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips", "one_official"]
+        },
+        "userBId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userBNickname": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "userBPhotoURL": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "userBBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips", "one_official"]
+        },
+        "lastMessage": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "lastSenderId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lastMessageRead": {
+          "type": "boolean",
+          "description": "Whether the latest message in the thread has been read by the recipient"
+        },
+        "lastMessageReadAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the latest message in the thread was read"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "participantIds",
+        "userAId",
+        "userANickname",
+        "userAPhotoURL",
+        "userABadge",
+        "userBId",
+        "userBNickname",
+        "userBPhotoURL",
+        "userBBadge",
+        "lastMessage",
+        "lastSenderId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Direct message within a chat thread supporting text, photos, and Microsoft Office / PDF files.",
+      "type": "object",
+      "properties": {
+        "chatId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantIds": {
+          "type": "array",
+          "description": "2-element array of participant UIDs"
+        },
+        "senderId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "recipientId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderNickname": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "senderPhotoURL": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "senderBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips", "one_official"]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "attachmentType": {
+          "type": "string",
+          "maxLength": 16,
+          "enum": ["none", "photo", "video", "pdf", "word", "excel", "ppt"]
+        },
+        "attachmentName": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "attachmentSize": {
+          "type": "number"
+        },
+        "attachmentMime": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "attachmentDataUrl": {
+          "type": "string",
+          "maxLength": 750000
+        },
+        "read": {
+          "type": "boolean",
+          "description": "Whether the recipient has read this message"
+        },
+        "readAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the recipient read this message"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "chatId",
+        "participantIds",
+        "senderId",
+        "recipientId",
+        "senderNickname",
+        "senderPhotoURL",
+        "senderBadge",
+        "text",
+        "attachmentType",
+        "attachmentName",
+        "attachmentSize",
+        "attachmentMime",
+        "attachmentDataUrl",
+        "createdAt"
+      ]
+    },
+    "Suggestion": {
+      "title": "Suggestion",
+      "description": "Student suggestion or feature request in the campus Suggestion Box.",
+      "type": "object",
+      "properties": {
+        "authorId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "authorNickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "authorPhotoURL": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "authorBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips"]
+        },
+        "isAnonymous": {
+          "type": "boolean"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 140
+        },
+        "content": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 3000
+        },
+        "upvotesCount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["under_review", "planned", "in_progress", "completed"]
+        },
+        "adminReply": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "adminReplyBy": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "adminReplyBadge": {
+          "type": "string",
+          "maxLength": 20,
+          "enum": ["verified", "moderator", "developer", "tulips", "one_official"]
+        },
+        "adminRepliedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["edu_verified"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "authorId",
+        "authorNickname",
+        "authorPhotoURL",
+        "isAnonymous",
+        "category",
+        "title",
+        "content",
+        "upvotesCount",
+        "status",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SuggestionUpvote": {
+      "title": "SuggestionUpvote",
+      "description": "Individual student upvote record on a suggestion.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "createdAt"]
+    },
+    "ContentReport": {
+      "title": "ContentReport",
+      "description": "Student report on a post, comment, or user for developer moderation review.",
+      "type": "object",
+      "properties": {
+        "targetType": {
+          "type": "string",
+          "enum": ["post", "comment", "user"]
+        },
+        "targetId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "targetAuthorId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "targetAuthorNickname": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "targetPreview": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "reporterId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "reporterNickname": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "reviewed", "resolved", "dismissed"]
+        },
+        "reviewedBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "resolutionNote": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["edu_verified"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "targetType",
+        "targetId",
+        "targetAuthorId",
+        "targetAuthorNickname",
+        "targetPreview",
+        "reporterId",
+        "reporterNickname",
+        "reason",
+        "status",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ModerationRule": {
+      "title": "ModerationRule",
+      "description": "Platform moderation rule and keyword filter configured by developers.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["warn", "hide", "block"]
+        },
+        "keywords": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["edu_verified"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "title",
+        "description",
+        "category",
+        "severity",
+        "keywords",
+        "isActive",
+        "createdBy",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PlatformSettings": {
+      "title": "PlatformSettings",
+      "description": "Global website controls, branding, feature flags, announcements, and maintenance mode.",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string", "maxLength": 80 },
+        "siteTagline": { "type": "string", "maxLength": 160 },
+        "logoText": { "type": "string", "maxLength": 24 },
+        "logoImageUrl": { "type": "string", "maxLength": 2048 },
+        "primaryColor": { "type": "string", "maxLength": 32 },
+        "accentColor": { "type": "string", "maxLength": 32 },
+        "allowNewPosts": { "type": "boolean" },
+        "allowComments": { "type": "boolean" },
+        "allowFileUploads": { "type": "boolean" },
+        "allowDirectChat": { "type": "boolean" },
+        "allowAnonymousMode": { "type": "boolean" },
+        "allowSuggestionBox": { "type": "boolean" },
+        "maintenanceMode": { "type": "boolean" },
+        "maintenanceMessage": { "type": "string", "maxLength": 500 },
+        "announcementActive": { "type": "boolean" },
+        "announcementTitle": { "type": "string", "maxLength": 160 },
+        "announcementText": { "type": "string", "maxLength": 1000 },
+        "systemNoticeActive": { "type": "boolean" },
+        "systemNoticeText": { "type": "string", "maxLength": 500 },
+        "systemNoticeType": { "type": "string", "enum": ["info", "warning", "urgent"] },
+        "deletedPostIds": { "type": "array", "description": "List of permanently deleted post IDs synced across clients" },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "visibility": { "type": "string", "enum": ["edu_verified"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "siteName",
+        "logoText",
+        "primaryColor",
+        "accentColor",
+        "allowNewPosts",
+        "allowComments",
+        "allowFileUploads",
+        "allowDirectChat",
+        "allowAnonymousMode",
+        "allowSuggestionBox",
+        "maintenanceMode",
+        "visibility"
+      ]
+    },
+    "CommentReaction": {
+      "title": "CommentReaction",
+      "description": "Specific emoji reaction by a verified student on a comment within a post.",
+      "type": "object",
+      "properties": {
+        "postId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "commentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "emoji": {
+          "type": "string",
+          "enum": ["❤️", "😂", "😮", "😢", "🔥", "👏"]
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["edu_verified"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["postId", "commentId", "userId", "emoji", "visibility", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPublicProfile" },
+      "description": "Public student profiles containing nickname, cooldown timestamp, badge, and Gmail avatar."
+    },
+    "/users_private/{userId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Owner-isolated private student record containing full .edu.ph email and password state."
+    },
+    "/nicknames/{nicknameId}": {
+      "schema": { "$ref": "#/entities/NicknameReservation" },
+      "description": "Unique nickname registry preventing duplicate nicknames across students."
+    },
+    "/presence/{userId}": {
+      "schema": { "$ref": "#/entities/UserPresence" },
+      "description": "Real-time online presence records for verified users."
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Student rants and academic file posts."
+    },
+    "/posts/{postId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/Comment" },
+      "description": "Comments belonging to a specific post."
+    },
+    "/posts/{postId}/reactions/{userId}": {
+      "schema": { "$ref": "#/entities/Reaction" },
+      "description": "Individual user reactions on a specific post."
+    },
+    "/posts/{postId}/comment_reactions/{reactionId}": {
+      "schema": { "$ref": "#/entities/CommentReaction" },
+      "description": "Emoji reactions on comments within a specific post."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Real-time notifications for likes, comments, and chat messages."
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatThread" },
+      "description": "1-on-1 chat threads between MSU students."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Real-time messages with photos and Microsoft Office / PDF attachments."
+    },
+    "/suggestions/{suggestionId}": {
+      "schema": { "$ref": "#/entities/Suggestion" },
+      "description": "Campus suggestion box ideas and feature requests."
+    },
+    "/suggestions/{suggestionId}/upvotes/{userId}": {
+      "schema": { "$ref": "#/entities/SuggestionUpvote" },
+      "description": "Student upvote records on a suggestion."
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/ContentReport" },
+      "description": "Moderation reports submitted on posts, comments, or users."
+    },
+    "/moderation_rules/{ruleId}": {
+      "schema": { "$ref": "#/entities/ModerationRule" },
+      "description": "Platform moderation rules and keyword filters."
+    },
+    "/platform_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/PlatformSettings" },
+      "description": "Global website controls, branding, announcements, and feature flags."
+    }
+  }
+}

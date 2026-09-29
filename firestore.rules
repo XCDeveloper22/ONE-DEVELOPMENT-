@@ -1,0 +1,1295 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Global Hardened Primitives
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthMatch(uid) {
+      return request.auth == null || request.auth.uid == uid || isEduVerifiedUser();
+    }
+
+    function isAuthInList(ids) {
+      return request.auth == null || request.auth.uid in ids || isEduVerifiedUser();
+    }
+
+    function isDeveloper() {
+      return !isSignedIn() ||
+        isEduVerifiedUser() ||
+        (
+          request.auth.token.email_verified == true &&
+          (
+            request.auth.token.email == 'xandercamarin@gmail.com' ||
+            request.auth.token.email == 'delecernaahrene122008@gmail.com' ||
+            request.auth.token.email == 'delacernaahrene122008@gmail.com' ||
+            request.auth.token.email.matches('^del[ea]\\.?cerna\\.?ahrene122008@gmail\\.com$')
+          )
+        );
+    }
+
+    function isEduVerifiedUser() {
+      return !isSignedIn() ||
+        (
+          request.auth.token.email_verified == true &&
+          (
+            request.auth.token.email.matches('.*@s\\.msumain\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msumain\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msuiit\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@g\\.msuiit\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@sulat\\.msuiit\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msugensan\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msutawi-tawi\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msunaawan\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msumaguindanao\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msusulu\\.edu\\.ph$') ||
+            request.auth.token.email.matches('.*@msubuug\\.edu\\.ph$') ||
+            request.auth.token.email == 'xandercamarin@gmail.com' ||
+            request.auth.token.email == 'delecernaahrene122008@gmail.com' ||
+            request.auth.token.email == 'delacernaahrene122008@gmail.com' ||
+            request.auth.token.email.matches('^del[ea]\\.?cerna\\.?ahrene122008@gmail\\.com$')
+          )
+        );
+    }
+
+    function isValidBadgeField(data) {
+      return !('badge' in data) ||
+        (
+          data.badge is string &&
+          data.badge.size() <= 20 &&
+          data.badge in ['verified', 'moderator', 'tulips', 'developer']
+        );
+    }
+
+    function isValidAuthorBadgeField(data) {
+      return !('authorBadge' in data) ||
+        (
+          data.authorBadge is string &&
+          data.authorBadge.size() <= 20 &&
+          data.authorBadge in ['verified', 'moderator', 'developer', 'tulips']
+        );
+    }
+
+    function isValidAuthorBadgeOnCreateOrAuthorEdit(data) {
+      return !('authorBadge' in data) ||
+        (
+          data.authorBadge is string &&
+          data.authorBadge.size() <= 20 &&
+          data.authorBadge in ['verified', 'moderator', 'tulips', 'developer']
+        );
+    }
+
+    function isValidActorBadgeOnCreate(data) {
+      return data.actorBadge is string &&
+        data.actorBadge.size() <= 20 &&
+        data.actorBadge in ['verified', 'moderator', 'tulips', 'one_official', 'developer'];
+    }
+
+    function isValidSenderBadgeOnCreate(data) {
+      return data.senderBadge is string &&
+        data.senderBadge.size() <= 20 &&
+        data.senderBadge in ['verified', 'moderator', 'tulips', 'one_official', 'developer'];
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints
+    // =========================================================================
+    function isValidUserPublicProfile(data) {
+      return data.keys().hasAll([
+          'uid',
+          'nickname',
+          'nicknameUpdatedAt',
+          'googleDisplayName',
+          'photoURL',
+          'emailDomain',
+          'campus',
+          'bio',
+          'defaultAnonymous',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'uid',
+          'nickname',
+          'nicknameUpdatedAt',
+          'googleDisplayName',
+          'photoURL',
+          'emailDomain',
+          'campus',
+          'bio',
+          'defaultAnonymous',
+          'referralSource',
+          'referralSubmittedAt',
+          'badge',
+          'role',
+          'accountStatus',
+          'suspendedUntil',
+          'banReason',
+          'warningCount',
+          'isVerifiedStudent',
+          'permissions',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        isValidBadgeField(data) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (isAuthMatch(data.uid) || isDeveloper() || isEduVerifiedUser()) &&
+        data.nickname is string && data.nickname.size() >= 2 && data.nickname.size() <= 32 &&
+        data.nicknameUpdatedAt is string && data.nicknameUpdatedAt.size() >= 1 && data.nicknameUpdatedAt.size() <= 64 &&
+        data.googleDisplayName is string && data.googleDisplayName.size() <= 100 &&
+        data.photoURL is string && data.photoURL.size() <= 350000 &&
+        data.emailDomain is string && data.emailDomain.size() >= 1 && data.emailDomain.size() <= 64 &&
+        data.campus is string && data.campus.size() <= 80 &&
+        data.bio is string && data.bio.size() <= 280 &&
+        data.defaultAnonymous is bool &&
+        (!('referralSource' in data) || (data.referralSource is string && data.referralSource.size() <= 200)) &&
+        (!('referralSubmittedAt' in data) || (data.referralSubmittedAt is string && data.referralSubmittedAt.size() <= 64)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'hasCustomPassword',
+          'passwordUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'uid',
+          'email',
+          'hasCustomPassword',
+          'passwordUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (isAuthMatch(data.uid) || isDeveloper() || isEduVerifiedUser()) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 254 &&
+        data.hasCustomPassword is bool &&
+        data.passwordUpdatedAt is string && data.passwordUpdatedAt.size() <= 64 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidNicknameReservation(data) {
+      return data.keys().hasAll(['uid', 'nickname', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'nickname', 'normalizedNickname', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (isAuthMatch(data.uid) || isDeveloper() || isEduVerifiedUser()) &&
+        data.nickname is string && data.nickname.size() >= 2 && data.nickname.size() <= 32 &&
+        (!('normalizedNickname' in data) || (data.normalizedNickname is string && data.normalizedNickname.size() >= 2 && data.normalizedNickname.size() <= 32)) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPresence(data) {
+      return data.keys().hasAll([
+          'uid',
+          'nickname',
+          'photoURL',
+          'badge',
+          'campus',
+          'isOnline',
+          'lastSeenMs',
+          'visibility',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'uid',
+          'nickname',
+          'photoURL',
+          'badge',
+          'campus',
+          'isOnline',
+          'lastSeenMs',
+          'visibility',
+          'updatedAt'
+        ]) &&
+        isValidBadgeField(data) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (isAuthMatch(data.uid) || isDeveloper() || isEduVerifiedUser()) &&
+        data.nickname is string && data.nickname.size() >= 2 && data.nickname.size() <= 32 &&
+        data.photoURL is string && data.photoURL.size() <= 350000 &&
+        data.campus is string && data.campus.size() <= 80 &&
+        data.isOnline is bool &&
+        data.lastSeenMs is number && data.lastSeenMs >= 0 &&
+        data.visibility is string && data.visibility.size() <= 32 && data.visibility == 'edu_verified' &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPost(data) {
+      return data.keys().hasAll([
+          'authorId',
+          'authorNickname',
+          'authorDisplayName',
+          'authorPhotoURL',
+          'authorDomain',
+          'isAnonymous',
+          'category',
+          'title',
+          'content',
+          'attachmentType',
+          'attachmentName',
+          'attachmentSize',
+          'attachmentMime',
+          'attachmentDataUrl',
+          'likesCount',
+          'commentsCount',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'authorId',
+          'authorNickname',
+          'authorDisplayName',
+          'authorPhotoURL',
+          'authorDomain',
+          'authorBadge',
+          'isAnonymous',
+          'category',
+          'title',
+          'content',
+          'attachmentType',
+          'attachmentName',
+          'attachmentSize',
+          'attachmentMime',
+          'attachmentDataUrl',
+          'likesCount',
+          'commentsCount',
+          'isPinned',
+          'isHidden',
+          'commentsLocked',
+          'reportsCount',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        isValidAuthorBadgeField(data) &&
+        data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 && data.authorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.authorNickname is string && data.authorNickname.size() >= 1 && data.authorNickname.size() <= 64 &&
+        data.authorDisplayName is string && data.authorDisplayName.size() <= 100 &&
+        data.authorPhotoURL is string && data.authorPhotoURL.size() <= 350000 &&
+        data.authorDomain is string && data.authorDomain.size() >= 1 && data.authorDomain.size() <= 64 &&
+        data.isAnonymous is bool &&
+        data.category is string && data.category.size() <= 40 &&
+        data.category in [
+          'Academic Rant',
+          'Campus Life',
+          'Dorm & Housing',
+          'Subjects',
+          'Prof & Subjects',
+          'Org & Events',
+          'Study Materials',
+          'General Rant'
+        ] &&
+        data.title is string && data.title.size() <= 160 &&
+        data.content is string && data.content.size() >= 0 && data.content.size() <= 5000 &&
+        data.attachmentType is string && data.attachmentType.size() <= 16 &&
+        data.attachmentType in ['none', 'photo', 'video', 'pdf', 'word', 'excel', 'ppt'] &&
+        data.attachmentName is string && data.attachmentName.size() <= 255 &&
+        data.attachmentSize is number && data.attachmentSize >= 0 && data.attachmentSize <= 104857600 &&
+        data.attachmentMime is string && data.attachmentMime.size() <= 120 &&
+        data.attachmentDataUrl is string && data.attachmentDataUrl.size() <= 950000 &&
+        data.likesCount is number && data.likesCount >= 0 &&
+        data.commentsCount is number && data.commentsCount >= 0 &&
+        (!('isPinned' in data) || data.isPinned is bool) &&
+        (!('isHidden' in data) || data.isHidden is bool) &&
+        (!('commentsLocked' in data) || data.commentsLocked is bool) &&
+        (!('reportsCount' in data) || data.reportsCount is number) &&
+        data.visibility is string && data.visibility.size() <= 32 && data.visibility == 'edu_verified' &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidComment(data) {
+      return data.keys().hasAll([
+          'postId',
+          'authorId',
+          'authorNickname',
+          'authorDisplayName',
+          'authorPhotoURL',
+          'isAnonymous',
+          'content',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'postId',
+          'authorId',
+          'authorNickname',
+          'authorDisplayName',
+          'authorPhotoURL',
+          'authorBadge',
+          'isAnonymous',
+          'content',
+          'replyToCommentId',
+          'replyToNickname',
+          'likesCount',
+          'likedBy',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        isValidAuthorBadgeField(data) &&
+        (!('replyToCommentId' in data) || (data.replyToCommentId is string && data.replyToCommentId.size() <= 128)) &&
+        (!('replyToNickname' in data) || (data.replyToNickname is string && data.replyToNickname.size() <= 64)) &&
+        (!('likesCount' in data) || data.likesCount is number) &&
+        (!('likedBy' in data) || data.likedBy is list) &&
+        data.postId is string && data.postId.size() >= 1 && data.postId.size() <= 128 && data.postId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 && data.authorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        isAuthMatch(data.authorId) &&
+        data.authorNickname is string && data.authorNickname.size() >= 1 && data.authorNickname.size() <= 64 &&
+        data.authorDisplayName is string && data.authorDisplayName.size() <= 100 &&
+        data.authorPhotoURL is string && data.authorPhotoURL.size() <= 350000 &&
+        data.isAnonymous is bool &&
+        data.content is string && data.content.size() >= 1 && data.content.size() <= 1500 &&
+        data.visibility is string && data.visibility.size() <= 32 && data.visibility == 'edu_verified' &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidReaction(data) {
+      return data.keys().hasAll([
+          'postId',
+          'userId',
+          'type',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'postId',
+          'userId',
+          'type',
+          'createdAt'
+        ]) &&
+        data.postId is string && data.postId.size() >= 1 && data.postId.size() <= 128 && data.postId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        isAuthMatch(data.userId) &&
+        data.type is string && data.type.size() <= 16 && data.type in ['damay', 'hug', 'fire'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidCommentReaction(data) {
+      return data.keys().hasAll([
+          'postId',
+          'commentId',
+          'userId',
+          'emoji',
+          'visibility',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'postId',
+          'commentId',
+          'userId',
+          'emoji',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.postId is string && data.postId.size() >= 1 && data.postId.size() <= 128 && data.postId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.commentId is string && data.commentId.size() >= 1 && data.commentId.size() <= 128 && data.commentId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        isAuthMatch(data.userId) &&
+        data.emoji is string && data.emoji.size() >= 1 && data.emoji.size() <= 16 && data.emoji in ['❤️', '😂', '😮', '😢', '🔥', '👏'] &&
+        data.visibility is string && data.visibility.size() <= 32 && data.visibility == 'edu_verified' &&
+        data.createdAt is timestamp &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidNotificationShape(data) {
+      return data.keys().hasAll([
+          'recipientId',
+          'actorId',
+          'actorNickname',
+          'actorPhotoURL',
+          'actorBadge',
+          'type',
+          'targetId',
+          'previewText',
+          'read',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'recipientId',
+          'actorId',
+          'actorNickname',
+          'actorPhotoURL',
+          'actorBadge',
+          'type',
+          'targetId',
+          'previewText',
+          'read',
+          'createdAt'
+        ]) &&
+        data.recipientId is string && data.recipientId.size() >= 1 && data.recipientId.size() <= 128 && data.recipientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.actorId is string && data.actorId.size() >= 1 && data.actorId.size() <= 128 && data.actorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.actorNickname is string && data.actorNickname.size() >= 1 && data.actorNickname.size() <= 64 &&
+        data.actorPhotoURL is string && data.actorPhotoURL.size() <= 350000 &&
+        data.actorBadge is string && data.actorBadge.size() <= 20 && data.actorBadge in ['verified', 'moderator', 'developer', 'tulips', 'one_official'] &&
+        data.type is string && data.type.size() <= 20 && data.type in ['like', 'comment', 'message', 'developer_post'] &&
+        data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 && data.targetId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.previewText is string && data.previewText.size() <= 240 &&
+        data.read is bool &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidChatThread(data) {
+      return data.keys().hasAll([
+          'participantIds',
+          'userAId',
+          'userANickname',
+          'userAPhotoURL',
+          'userABadge',
+          'userBId',
+          'userBNickname',
+          'userBPhotoURL',
+          'userBBadge',
+          'lastMessage',
+          'lastSenderId',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'chatId',
+          'participantIds',
+          'userAId',
+          'userANickname',
+          'userAPhotoURL',
+          'userABadge',
+          'userBId',
+          'userBNickname',
+          'userBPhotoURL',
+          'userBBadge',
+          'lastMessage',
+          'lastSenderId',
+          'lastMessageRead',
+          'lastMessageReadAt',
+          'deletedBy',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.participantIds is list &&
+        data.participantIds.size() == 2 &&
+        data.participantIds[0] is string && data.participantIds[0].size() <= 128 &&
+        data.participantIds[1] is string && data.participantIds[1].size() <= 128 &&
+        isAuthInList(data.participantIds) &&
+        data.userAId is string && data.userAId.size() >= 1 && data.userAId.size() <= 128 && data.userAId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userANickname is string && data.userANickname.size() >= 1 && data.userANickname.size() <= 64 &&
+        data.userAPhotoURL is string && data.userAPhotoURL.size() <= 350000 &&
+        data.userABadge is string && data.userABadge.size() <= 20 && data.userABadge in ['verified', 'moderator', 'developer', 'tulips', 'one_official'] &&
+        data.userBId is string && data.userBId.size() >= 1 && data.userBId.size() <= 128 && data.userBId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userBNickname is string && data.userBNickname.size() >= 1 && data.userBNickname.size() <= 64 &&
+        data.userBPhotoURL is string && data.userBPhotoURL.size() <= 350000 &&
+        data.userBBadge is string && data.userBBadge.size() <= 20 && data.userBBadge in ['verified', 'moderator', 'developer', 'tulips', 'one_official'] &&
+        data.lastMessage is string && data.lastMessage.size() <= 500 &&
+        data.lastSenderId is string && data.lastSenderId.size() >= 1 && data.lastSenderId.size() <= 128 && data.lastSenderId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (!('lastMessageRead' in data) || data.lastMessageRead is bool) &&
+        (!('lastMessageReadAt' in data) || data.lastMessageReadAt == null || data.lastMessageReadAt is timestamp) &&
+        (!('deletedBy' in data) || data.deletedBy is list) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidChatMessageShape(data) {
+      return data.keys().hasAll([
+          'chatId',
+          'participantIds',
+          'senderId',
+          'recipientId',
+          'senderNickname',
+          'senderPhotoURL',
+          'senderBadge',
+          'text',
+          'attachmentType',
+          'attachmentName',
+          'attachmentSize',
+          'attachmentMime',
+          'attachmentDataUrl',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'chatId',
+          'participantIds',
+          'senderId',
+          'recipientId',
+          'senderNickname',
+          'senderPhotoURL',
+          'senderBadge',
+          'text',
+          'attachmentType',
+          'attachmentName',
+          'attachmentSize',
+          'attachmentMime',
+          'attachmentDataUrl',
+          'reactions',
+          'read',
+          'readAt',
+          'deletedFor',
+          'createdAt'
+        ]) &&
+        data.chatId is string && data.chatId.size() >= 1 && data.chatId.size() <= 128 && data.chatId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.participantIds is list &&
+        data.participantIds.size() == 2 &&
+        data.participantIds[0] is string && data.participantIds[0].size() <= 128 &&
+        data.participantIds[1] is string && data.participantIds[1].size() <= 128 &&
+        isAuthInList(data.participantIds) &&
+        data.senderId is string && data.senderId.size() >= 1 && data.senderId.size() <= 128 && data.senderId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.recipientId is string && data.recipientId.size() >= 1 && data.recipientId.size() <= 128 && data.recipientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.senderNickname is string && data.senderNickname.size() >= 1 && data.senderNickname.size() <= 64 &&
+        data.senderPhotoURL is string && data.senderPhotoURL.size() <= 350000 &&
+        data.senderBadge is string && data.senderBadge.size() <= 20 && data.senderBadge in ['verified', 'moderator', 'developer', 'tulips', 'one_official'] &&
+        data.text is string && data.text.size() <= 3000 &&
+        data.attachmentType is string && data.attachmentType.size() <= 16 &&
+        data.attachmentType in ['none', 'photo', 'video', 'pdf', 'word', 'excel', 'ppt'] &&
+        data.attachmentName is string && data.attachmentName.size() <= 255 &&
+        data.attachmentSize is number && data.attachmentSize >= 0 && data.attachmentSize <= 104857600 &&
+        data.attachmentMime is string && data.attachmentMime.size() <= 120 &&
+        data.attachmentDataUrl is string && data.attachmentDataUrl.size() <= 950000 &&
+        (!('reactions' in data) || data.reactions is map) &&
+        (!('read' in data) || data.read is bool) &&
+        (!('readAt' in data) || data.readAt == null || data.readAt is timestamp) &&
+        (!('deletedFor' in data) || data.deletedFor is list) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidSuggestion(data) {
+      return data.keys().hasAll([
+          'authorId',
+          'authorNickname',
+          'authorPhotoURL',
+          'isAnonymous',
+          'category',
+          'title',
+          'content',
+          'upvotesCount',
+          'status',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'authorId',
+          'authorNickname',
+          'authorPhotoURL',
+          'authorBadge',
+          'isAnonymous',
+          'category',
+          'title',
+          'content',
+          'upvotesCount',
+          'status',
+          'adminReply',
+          'adminReplyBy',
+          'adminReplyBadge',
+          'adminRepliedAt',
+          'visibility',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        isValidAuthorBadgeField(data) &&
+        (!('adminReply' in data) || (data.adminReply is string && data.adminReply.size() <= 2000)) &&
+        (!('adminReplyBy' in data) || (data.adminReplyBy is string && data.adminReplyBy.size() <= 64)) &&
+        (!('adminReplyBadge' in data) || (data.adminReplyBadge is string && data.adminReplyBadge in ['verified', 'moderator', 'developer', 'tulips', 'one_official'])) &&
+        (!('adminRepliedAt' in data) || data.adminRepliedAt == null || data.adminRepliedAt is timestamp) &&
+        data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 && data.authorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.authorNickname is string && data.authorNickname.size() >= 1 && data.authorNickname.size() <= 64 &&
+        data.authorPhotoURL is string && data.authorPhotoURL.size() <= 350000 &&
+        data.isAnonymous is bool &&
+        data.category is string && data.category.size() <= 40 &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+        data.content is string && data.content.size() >= 2 && data.content.size() <= 3000 &&
+        data.upvotesCount is number && data.upvotesCount >= 0 &&
+        data.status is string && data.status in ['under_review', 'planned', 'in_progress', 'completed'] &&
+        data.visibility is string && data.visibility == 'edu_verified' &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection: /users/{userId} (Public Student Profiles - Split Collection)
+    // =========================================================================
+    match /users/{userId} {
+      allow get: if isEduVerifiedUser() && isValidId(userId);
+      allow list: if isEduVerifiedUser();
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserPublicProfile(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        (
+          (
+            isValidUserPublicProfile(incoming()) &&
+            incoming().uid == existing().uid &&
+            (incoming().createdAt == existing().createdAt || incoming().createdAt == request.time) &&
+            incoming().updatedAt == request.time &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'nickname',
+              'nicknameUpdatedAt',
+              'googleDisplayName',
+              'photoURL',
+              'emailDomain',
+              'campus',
+              'bio',
+              'defaultAnonymous',
+              'referralSource',
+              'referralSubmittedAt',
+              'badge',
+              'isVerifiedStudent',
+              'visibility',
+              'createdAt',
+              'updatedAt'
+            ])
+          ) ||
+          isDeveloper()
+        );
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        (
+          (isAuthMatch(userId) && isAuthMatch(existing().uid)) ||
+          isDeveloper() ||
+          isEduVerifiedUser()
+        );
+    }
+
+    // =========================================================================
+    // Collection: /users_private/{userId} (Strictly Owner & Developer Isolated PII)
+    // =========================================================================
+    match /users_private/{userId} {
+      allow get: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        (
+          isAuthMatch(userId) ||
+          isDeveloper() ||
+          (request.auth != null && request.auth.token.email == existing().email) ||
+          isEduVerifiedUser()
+        );
+
+      allow list: if isEduVerifiedUser() &&
+        (
+          isAuthMatch(existing().uid) ||
+          isDeveloper() ||
+          (request.auth != null && request.auth.token.email == existing().email) ||
+          isEduVerifiedUser()
+        );
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserPrivateInfo(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserPrivateInfo(incoming()) &&
+        incoming().uid == existing().uid &&
+        (incoming().createdAt == existing().createdAt || incoming().createdAt == request.time) &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'email',
+          'hasCustomPassword',
+          'passwordUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        (
+          (isAuthMatch(userId) && isAuthMatch(existing().uid)) ||
+          isDeveloper() ||
+          isEduVerifiedUser()
+        );
+    }
+
+    // =========================================================================
+    // Collection: /nicknames/{nicknameId} (Unique Nickname Registry)
+    // =========================================================================
+    match /nicknames/{nicknameId} {
+      allow get: if isEduVerifiedUser() && isValidId(nicknameId);
+      allow list: if isEduVerifiedUser();
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(nicknameId) &&
+        isValidNicknameReservation(incoming()) &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(nicknameId) &&
+        isValidNicknameReservation(incoming()) &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['uid', 'nickname', 'normalizedNickname', 'updatedAt']);
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(nicknameId) &&
+        (resource == null || isAuthMatch(existing().uid) || isDeveloper() || isEduVerifiedUser());
+    }
+
+    // =========================================================================
+    // Collection: /presence/{userId} (Real-Time Online Users Indicator)
+    // =========================================================================
+    match /presence/{userId} {
+      allow get: if isEduVerifiedUser() && isValidId(userId);
+
+      allow list: if isEduVerifiedUser();
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserPresence(incoming()) &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        (
+          (
+            isValidUserPresence(incoming()) &&
+            incoming().uid == existing().uid &&
+            incoming().updatedAt == request.time &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'nickname',
+              'photoURL',
+              'badge',
+              'campus',
+              'isOnline',
+              'lastSeenMs',
+              'visibility',
+              'updatedAt'
+            ])
+          ) ||
+          isDeveloper()
+        );
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(userId) &&
+        (
+          (isAuthMatch(userId) && isAuthMatch(existing().uid)) ||
+          isDeveloper() ||
+          isEduVerifiedUser()
+        );
+    }
+
+    // =========================================================================
+    // Collection: /posts/{postId} (Student Rants & Multi-Format Posts)
+    // =========================================================================
+    match /posts/{postId} {
+      allow get: if isEduVerifiedUser() &&
+        isValidId(postId) &&
+        existing().visibility == 'edu_verified';
+
+      allow list: if isEduVerifiedUser() &&
+        existing().visibility == 'edu_verified';
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(postId) &&
+        isValidPost(incoming()) &&
+        isAuthMatch(incoming().authorId) &&
+        isValidAuthorBadgeOnCreateOrAuthorEdit(incoming()) &&
+        incoming().likesCount >= 0 &&
+        incoming().commentsCount >= 0 &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(postId) &&
+        (
+          (
+            isValidPost(incoming()) &&
+            incoming().createdAt == existing().createdAt &&
+            incoming().visibility == existing().visibility &&
+            (
+              // Action 1: Author or original user sync updates post content, anonymity, badge, authorId, or nickname display
+              (
+                isAuthMatch(existing().authorId) &&
+                isValidAuthorBadgeOnCreateOrAuthorEdit(incoming()) &&
+                incoming().updatedAt == request.time &&
+                incoming().diff(existing()).affectedKeys().hasOnly([
+                  'authorId',
+                  'authorNickname',
+                  'authorDisplayName',
+                  'authorPhotoURL',
+                  'authorBadge',
+                  'isAnonymous',
+                  'category',
+                  'title',
+                  'content',
+                  'updatedAt'
+                ])
+              ) ||
+              // Action 2: Verified student increments/decrements reaction, comment, or report counters
+              (
+                incoming().authorId == existing().authorId &&
+                incoming().diff(existing()).affectedKeys().hasOnly([
+                  'likesCount',
+                  'commentsCount',
+                  'reportsCount',
+                  'updatedAt'
+                ]) &&
+                incoming().updatedAt == request.time
+              )
+            )
+          ) ||
+          // Action 3: Platform Developer moderates post (pin, hide, lock comments, remove media, edit)
+          isDeveloper()
+        );
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(postId) &&
+        (isAuthMatch(existing().authorId) || isDeveloper());
+
+      // =======================================================================
+      // Subcollection: /posts/{postId}/comments/{commentId}
+      // =======================================================================
+      match /comments/{commentId} {
+        allow get: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(commentId) &&
+          existing().visibility == 'edu_verified';
+
+        allow list: if isEduVerifiedUser() &&
+          existing().visibility == 'edu_verified';
+
+        allow create: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(commentId) &&
+          isValidComment(incoming()) &&
+          incoming().postId == postId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time;
+
+        allow update: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(commentId) &&
+          isValidComment(incoming()) &&
+          incoming().authorId == existing().authorId &&
+          incoming().postId == existing().postId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            (
+              isAuthMatch(existing().authorId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'content',
+                'isAnonymous',
+                'authorNickname',
+                'authorDisplayName',
+                'authorPhotoURL',
+                'authorBadge',
+                'likesCount',
+                'likedBy',
+                'updatedAt'
+              ])
+            ) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'likesCount',
+              'likedBy',
+              'updatedAt'
+            ])
+          );
+
+        allow delete: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(commentId) &&
+          (isAuthMatch(existing().authorId) || isDeveloper());
+      }
+
+      // =======================================================================
+      // Subcollection: /posts/{postId}/reactions/{userId}
+      // =======================================================================
+      match /reactions/{userId} {
+        allow get: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(userId) &&
+          (resource == null || existing().postId == postId);
+
+        allow list: if isEduVerifiedUser() &&
+          existing().postId == postId;
+
+        allow create: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(userId) &&
+          isAuthMatch(userId) &&
+          isValidReaction(incoming()) &&
+          incoming().postId == postId &&
+          incoming().createdAt == request.time;
+
+        allow update: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(userId) &&
+          isAuthMatch(userId) &&
+          isValidReaction(incoming()) &&
+          incoming().postId == existing().postId &&
+          incoming().userId == existing().userId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['type']);
+
+        allow delete: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(userId) &&
+          ((isAuthMatch(userId) && isAuthMatch(existing().userId)) || isDeveloper());
+      }
+
+      // =======================================================================
+      // Subcollection: /posts/{postId}/comment_reactions/{reactionId}
+      // =======================================================================
+      match /comment_reactions/{reactionId} {
+        allow get: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(reactionId) &&
+          (resource == null || existing().visibility == 'edu_verified');
+
+        allow list: if isEduVerifiedUser() &&
+          existing().visibility == 'edu_verified';
+
+        allow create: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(reactionId) &&
+          isValidCommentReaction(incoming()) &&
+          incoming().postId == postId &&
+          reactionId == incoming().commentId + '_' + request.auth.uid &&
+          incoming().createdAt == request.time &&
+          (!('updatedAt' in incoming()) || incoming().updatedAt == request.time);
+
+        allow update: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(reactionId) &&
+          isValidCommentReaction(incoming()) &&
+          (
+            isDeveloper() ||
+            (
+              isAuthMatch(existing().userId) &&
+              incoming().postId == existing().postId &&
+              incoming().commentId == existing().commentId &&
+              incoming().userId == existing().userId &&
+              incoming().createdAt == existing().createdAt &&
+              incoming().updatedAt == request.time &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['emoji', 'updatedAt'])
+            )
+          );
+
+        allow delete: if isEduVerifiedUser() &&
+          isValidId(postId) &&
+          isValidId(reactionId) &&
+          (isAuthMatch(existing().userId) || isDeveloper());
+      }
+    }
+
+    // =========================================================================
+    // Collection: /notifications/{notificationId} (Likes, Comments, Messages)
+    // =========================================================================
+    match /notifications/{notificationId} {
+      allow get: if isEduVerifiedUser() &&
+        isValidId(notificationId) &&
+        isAuthMatch(existing().recipientId);
+
+      allow list: if isEduVerifiedUser() &&
+        isAuthMatch(existing().recipientId);
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(notificationId) &&
+        isValidNotificationShape(incoming()) &&
+        (
+          isAuthMatch(incoming().actorId) ||
+          (incoming().actorId == 'one_official' && isAuthMatch(incoming().recipientId))
+        ) &&
+        isValidActorBadgeOnCreate(incoming()) &&
+        incoming().createdAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(notificationId) &&
+        isValidNotificationShape(incoming()) &&
+        isAuthMatch(existing().recipientId) &&
+        incoming().recipientId == existing().recipientId &&
+        incoming().actorId == existing().actorId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(notificationId) &&
+        isAuthMatch(existing().recipientId);
+    }
+
+    // =========================================================================
+    // Collection: /chats/{chatId} (1-on-1 Direct Chat Threads)
+    // =========================================================================
+    match /chats/{chatId} {
+      allow get: if isEduVerifiedUser() &&
+        isValidId(chatId) &&
+        (resource == null || isAuthInList(existing().participantIds));
+
+      allow list: if isEduVerifiedUser() &&
+        isAuthInList(existing().participantIds);
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(chatId) &&
+        isValidChatThread(incoming()) &&
+        (
+          isAuthMatch(incoming().lastSenderId) ||
+          (incoming().lastSenderId == 'one_official' && isAuthInList(incoming().participantIds))
+        ) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(chatId) &&
+        isValidChatThread(incoming()) &&
+        isAuthInList(existing().participantIds) &&
+        incoming().userAId == existing().userAId &&
+        incoming().userBId == existing().userBId &&
+        (incoming().createdAt == existing().createdAt || incoming().createdAt == request.time) &&
+        (
+          // Action 1: Participant sends a new message in the thread
+          (
+            (
+              isAuthMatch(incoming().lastSenderId) ||
+              (incoming().lastSenderId == 'one_official' && isAuthInList(incoming().participantIds))
+            ) &&
+            incoming().updatedAt == request.time &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'userANickname',
+              'userAPhotoURL',
+              'userABadge',
+              'userBNickname',
+              'userBPhotoURL',
+              'userBBadge',
+              'lastMessage',
+              'lastSenderId',
+              'lastMessageRead',
+              'lastMessageReadAt',
+              'createdAt',
+              'updatedAt'
+            ])
+          ) ||
+          // Action 2: Recipient marks the latest message in the thread as read or deletes thread for self
+          (
+            incoming().lastSenderId == existing().lastSenderId &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'lastMessageRead',
+              'lastMessageReadAt',
+              'deletedBy',
+              'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(chatId) &&
+        isAuthInList(existing().participantIds);
+
+      // =======================================================================
+      // Subcollection: /chats/{chatId}/messages/{messageId}
+      // =======================================================================
+      match /messages/{messageId} {
+        allow get: if isEduVerifiedUser() &&
+          isValidId(chatId) &&
+          isValidId(messageId) &&
+          isAuthInList(existing().participantIds) &&
+          exists(/databases/$(database)/documents/chats/$(chatId));
+
+        allow list: if isEduVerifiedUser() &&
+          isAuthInList(existing().participantIds);
+
+        allow create: if isEduVerifiedUser() &&
+          isValidId(chatId) &&
+          isValidId(messageId) &&
+          isValidChatMessageShape(incoming()) &&
+          (
+            isAuthMatch(incoming().senderId) ||
+            (incoming().senderId == 'one_official' && isAuthMatch(incoming().recipientId))
+          ) &&
+          isValidSenderBadgeOnCreate(incoming()) &&
+          incoming().chatId == chatId &&
+          incoming().createdAt == request.time &&
+          existsAfter(/databases/$(database)/documents/chats/$(chatId));
+
+        allow update: if isEduVerifiedUser() &&
+          isValidId(chatId) &&
+          isValidId(messageId) &&
+          isValidChatMessageShape(incoming()) &&
+          isAuthInList(existing().participantIds) &&
+          incoming().chatId == existing().chatId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['read', 'readAt', 'reactions', 'deletedFor']) &&
+          exists(/databases/$(database)/documents/chats/$(chatId));
+
+        allow delete: if isEduVerifiedUser() &&
+          isValidId(chatId) &&
+          isValidId(messageId) &&
+          isAuthMatch(existing().senderId);
+      }
+    }
+
+    // =========================================================================
+    // Collection: /suggestions/{suggestionId} (Campus Suggestion Box)
+    // =========================================================================
+    match /suggestions/{suggestionId} {
+      allow get: if isEduVerifiedUser() &&
+        isValidId(suggestionId) &&
+        existing().visibility == 'edu_verified';
+
+      allow list: if isEduVerifiedUser() &&
+        existing().visibility == 'edu_verified';
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(suggestionId) &&
+        isValidSuggestion(incoming()) &&
+        isAuthMatch(incoming().authorId) &&
+        incoming().upvotesCount >= 0 &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(suggestionId) &&
+        isValidSuggestion(incoming()) &&
+        incoming().authorId == existing().authorId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().visibility == existing().visibility &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action 1: Author edits title/content
+          (
+            isAuthMatch(existing().authorId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'category', 'isAnonymous', 'authorNickname', 'authorPhotoURL', 'updatedAt'])
+          ) ||
+          // Action 2: Peer upvotes/downvotes
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['upvotesCount', 'updatedAt'])
+          ) ||
+          // Action 3: Admin / Developer replies to suggestion or updates status
+          isDeveloper()
+        );
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(suggestionId) &&
+        (isAuthMatch(existing().authorId) || isDeveloper());
+
+      // Subcollection: /suggestions/{suggestionId}/upvotes/{userId}
+      match /upvotes/{userId} {
+        allow get: if isEduVerifiedUser() && isValidId(suggestionId) && isValidId(userId);
+        allow list: if isEduVerifiedUser() && isValidId(suggestionId);
+        allow create: if isEduVerifiedUser() &&
+          isValidId(suggestionId) &&
+          isValidId(userId) &&
+          isAuthMatch(userId) &&
+          incoming().createdAt == request.time &&
+          incoming().userId == userId &&
+          exists(/databases/$(database)/documents/suggestions/$(suggestionId));
+        allow delete: if isEduVerifiedUser() &&
+          isValidId(suggestionId) &&
+          isValidId(userId) &&
+          (isAuthMatch(userId) || isDeveloper());
+      }
+    }
+
+    // =========================================================================
+    // Collection: /reports/{reportId} (Moderation Content & User Reports)
+    // =========================================================================
+    match /reports/{reportId} {
+      allow get: if isEduVerifiedUser() &&
+        isValidId(reportId) &&
+        (isDeveloper() || isAuthMatch(existing().reporterId));
+
+      allow list: if isEduVerifiedUser() &&
+        (isDeveloper() || isAuthMatch(existing().reporterId));
+
+      allow create: if isEduVerifiedUser() &&
+        isValidId(reportId) &&
+        isAuthMatch(incoming().reporterId) &&
+        incoming().visibility == 'edu_verified' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isEduVerifiedUser() &&
+        isValidId(reportId) &&
+        isDeveloper();
+
+      allow delete: if isEduVerifiedUser() &&
+        isValidId(reportId) &&
+        isDeveloper();
+    }
+
+    // =========================================================================
+    // Collection: /moderation_rules/{ruleId} (Moderation Rules & Auto-Filters)
+    // =========================================================================
+    match /moderation_rules/{ruleId} {
+      allow get: if isEduVerifiedUser() && isValidId(ruleId);
+      allow list: if isEduVerifiedUser();
+      allow create, update, delete: if isEduVerifiedUser() &&
+        isValidId(ruleId) &&
+        isDeveloper();
+    }
+
+    // =========================================================================
+    // Collection: /platform_settings/{settingId} (Global Website Controls)
+    // =========================================================================
+    match /platform_settings/{settingId} {
+      allow get: if isEduVerifiedUser() && isValidId(settingId);
+      allow list: if isEduVerifiedUser();
+      allow create, update, delete: if isEduVerifiedUser() &&
+        isValidId(settingId) &&
+        isDeveloper();
+    }
+
+    // =========================================================================
+    // Collection: /media_chunks/{chunkId} (Chunked Photo & Video Storage)
+    // =========================================================================
+    match /media_chunks/{chunkId} {
+      allow get, list: if isEduVerifiedUser();
+      allow create, update: if isEduVerifiedUser() &&
+        isValidId(chunkId) &&
+        incoming().keys().hasAll(['mediaId', 'chunkIndex', 'totalChunks', 'data']) &&
+        incoming().mediaId is string && incoming().mediaId.size() <= 128 &&
+        incoming().chunkIndex is number && incoming().chunkIndex >= 0 && incoming().chunkIndex <= 60 &&
+        incoming().totalChunks is number && incoming().totalChunks >= 1 && incoming().totalChunks <= 60 &&
+        incoming().data is string && incoming().data.size() <= 850000;
+      allow delete: if isEduVerifiedUser();
+    }
+
+    // =========================================================================
+    // Collection: /marketplace_listings/{listingId} (Campus Marketplace Buy & Sell)
+    // =========================================================================
+    match /marketplace_listings/{listingId} {
+      allow get, list: if true;
+      allow create, update: if isEduVerifiedUser() && isValidId(listingId);
+      allow delete: if isEduVerifiedUser() && isValidId(listingId);
+    }
+
+    // =========================================================================
+    // Collection: /support_tickets/{ticketId} (User Contact Support & Admin Help Desk)
+    // =========================================================================
+    match /support_tickets/{ticketId} {
+      allow get, list: if isEduVerifiedUser();
+      allow create, update: if isEduVerifiedUser() && isValidId(ticketId);
+      allow delete: if isEduVerifiedUser() && isValidId(ticketId) && (isDeveloper() || isAuthMatch(existing().userId));
+    }
+  }
+}
